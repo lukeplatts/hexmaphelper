@@ -18,7 +18,7 @@ for terrtype1 in terrtypes:
         terraindict[terrtype1][terrtype2] = terrvalues[terrtypes.index(terrtype1)][terrtypes.index(terrtype2)]
 
 
-def tileroll(optionslist, chance=None):
+def tileroll(optionslist, weights=None):
     """
     Rolls randomly to determine a tile.
     :param: optionslist - list of tile options.
@@ -26,30 +26,7 @@ def tileroll(optionslist, chance=None):
 
     :returns: Tile option from optionslist
     """
-    # If no probabilities are given, divide 1 by the number of elements in the list.
-    if chance is None:
-        chance = [(1 / len(optionslist))] * len(optionslist)
-    # Check that probabilities are <= 1.
-    listsum = 0
-    for element in chance:
-        listsum += element
-    if listsum > 1:
-        raise SyntaxError('List of probabilities must be <= 1.')
-    tile = None
-    # Generate roll.
-    randnum = random.random()
-    elementcount = 0
-    probcumulative = 0
-    # Compare random roll to probability.
-    for prob in chance:
-        if randnum <= prob:
-            tile = optionslist[elementcount]
-        else:
-            elementcount += 1
-            probcumulative += prob
-    if tile is None:
-        tile = optionslist[-1]
-    return tile
+    return random.choices(optionslist, weights=weights)
 
 
 def tile_terrain_creation(terrtype):
@@ -61,7 +38,8 @@ def tile_terrain_creation(terrtype):
     # Reset Rolls.
     roll = None
     # Create initial dictionary for tile.
-    tiledict = {'water': 0, 'swamp': 0, 'desert': 0, 'plains': 0, 'forest': 0, 'hills': 0, 'mountain': 0}
+    tiledict = {'type': terrtype, 'water': 0, 'swamp': 0, 'desert': 0, 'plains': 0, 'forest': 0, 'hills': 0,
+                'mountain': 0}
 
     # Find primary, secondary, and tertiary tiles.
     primary = [k for k, v in terraindict[terrtype].items() if v == 9][0]
@@ -75,7 +53,7 @@ def tile_terrain_creation(terrtype):
             wldcrdx += 1
             wildcards = [k for k, v in terraindict[terrtype].items() if v == 1]
             wildcard = tileroll(wildcards)
-            tiledict[wildcard] += 1
+            tiledict[wildcard[0]] += 1
 
     # Assign tiles to tiledict.
     tiledict[primary] = terraindict[terrtype][primary]
@@ -87,31 +65,31 @@ def tile_terrain_creation(terrtype):
         # Roll for light vs heavy forest.
         lightforest, heavyforest = 0, 0
         for i in range(tiledict['forest']):
-            roll = tileroll([1, 2], [0.66])
-            if roll == 1:
+            roll = tileroll(['light forest', 'heavy forest'], [0.66, 0.33])
+            if roll == ['light forest']:
                 lightforest += 1
-            elif roll == 2:
+            elif roll == ['heavy forest']:
                 heavyforest += 1
         tiledict['forest'] -= (lightforest + heavyforest)
-        tiledict['lightforest'] = lightforest
-        tiledict['heavyforest'] = heavyforest
+        tiledict['light forest'] = lightforest
+        tiledict['heavy forest'] = heavyforest
 
     # Desert Terrain Tile Special Cases
     if terrtype == 'desert':
         # Roll for Hills Modifier
         modhills, rockdesert, highdunes = 0, 0, 0
         for i in range(terraindict["desert"]["hills"]):
-            roll = tileroll([1, 2], [0.33])
-            if roll == 1:
+            roll = tileroll(['hillmod', 'nomod'], [0.33, 0.66])
+            if roll == ['hillmod']:
                 modhills += 1
-                if tileroll([1, 2], [0.5]) == 1:
+                if tileroll(['rockdesert', 'highdunes'], [0.5, 0.5]) == ['rockdesert']:
                     rockdesert += 1
                 else:
                     highdunes += 1
         if modhills > 0:
             tiledict['hills'] -= (rockdesert + highdunes)
-            tiledict['rockdesert'] = rockdesert
-            tiledict['highdunes'] = highdunes
+            tiledict['rock desert'] = rockdesert
+            tiledict['high dunes'] = highdunes
 
     # Plains Terrain Tile Special Cases
     if terrtype == 'plains':
@@ -123,23 +101,23 @@ def tile_terrain_creation(terrtype):
         # Roll for light vs heavy forest.
         lightforest, heavyforest = 0, 0
         for i in range(tiledict['forest']):
-            roll = tileroll([1, 2], [0.66])
-            if roll == 1:
+            roll = tileroll(['light forest', 'heavy forest'], [0.66, 0.33])
+            if roll == ['light forest']:
                 lightforest += 1
-            elif roll == 2:
+            elif roll == ['heavy forest']:
                 heavyforest += 1
         tiledict['forest'] -= (lightforest + heavyforest)
-        tiledict['lightforest'] = lightforest
-        tiledict['heavyforest'] = heavyforest
+        tiledict['light forest'] = lightforest
+        tiledict['heavy forest'] = heavyforest
 
         # Roll for forested hills vs grassy hills.
         forestedhills = 0
         for i in range(tiledict['hills']):
-            roll = tileroll([1, 2], [0.66])
-            if roll == 1:
+            roll = tileroll(['forested hill', 'hills'], [0.666, 0.333])
+            if roll == ['forested hill']:
                 forestedhills += 1
         if forestedhills > 0:
-            tiledict['forestedhills'] = forestedhills
+            tiledict['forested hill'] = forestedhills
             tiledict['hills'] -= forestedhills
 
         # Roll for forested mountains vs mountains.
@@ -147,11 +125,11 @@ def tile_terrain_creation(terrtype):
         if tiledict['mountain'] > 0:
             forestedmountain = 0
             for i in range(int(tiledict['mountain'])):
-                roll = tileroll([1, 2], [0.66])
-                if roll == 1:
+                roll = tileroll(['forested mountain', 'mountain'], [0.666, 0.333])
+                if roll == ['mountain']:
                     forestedmountain += 1
             if forestedmountain > 0:
-                tiledict['forestedmountain'] = forestedmountain
+                tiledict['forested mountain'] = forestedmountain
                 tiledict['mountain'] -= forestedmountain
 
     # Hills Terrain Tile Special Cases
@@ -160,17 +138,17 @@ def tile_terrain_creation(terrtype):
         if tiledict['forest'] > 0:
             forestedhill = 0
             for i in range(int(tiledict['forest'])):
-                roll = tileroll([1, 2], [0.33])
-                if roll == 1:
+                roll = tileroll(['forested hill', 'forest'], [0.333, 0.666])
+                if roll == ['forested hill']:
                     forestedhill += 1
             if forestedhill > 0:
-                tiledict['forestedhill'] = forestedhill
+                tiledict['forested hill'] = forestedhill
                 tiledict['forest'] -= forestedhill
         # Roll for Canyon or Fissure
         canyon = 0
         for i in range(int(tiledict['hills'])):
-            roll = tileroll([1, 2], [0.2])
-            if roll == 1:
+            roll = tileroll(['canyon', 'hills'], [0.2, 0.8])
+            if roll == ['canyon']:
                 canyon += 1
         if canyon > 0:
             tiledict['canyon'] = canyon
@@ -178,38 +156,41 @@ def tile_terrain_creation(terrtype):
         # Roll for Mountain Pass
         mpass = 0
         for i in range(int(tiledict['mountain'])):
-            roll = tileroll([1, 2], [0.4])
-            if roll == 1:
+            roll = tileroll(['mpass', 'mountain'], [0.4, 0.6])
+            if roll == ['mpass']:
                 mpass += 1
         if mpass > 0:
-            tiledict['mpass'] = mpass
+            tiledict['mountain pass'] = mpass
             tiledict['mountain'] -= mpass
 
     # Mountains Terrain Tile Special Cases
-    if terrtype == 'mountain':
+    if terrtype == ['mountain']:
         # Roll for Forested Mountain
         forestedmnt = 0
         for i in range(int(tiledict['forest'])):
-            roll = tileroll([1, 2], [0.33])
-            if roll == 1:
+            roll = tileroll(['forested mountain', 'forest'], [0.333, 0.666])
+            if roll == ['forested mountain']:
                 forestedmnt += 1
         if forestedmnt > 0:
-            tiledict['forestedmnt'] = forestedmnt
+            tiledict['forested mountain'] = forestedmnt
             tiledict['forest'] -= forestedmnt
         # Roll for Peak, Pass, or Volcano
         mpeak, mpass, mvol = 0, 0, 0
         for i in range(int(tiledict['mountain'])):
-            roll = tileroll([1, 2, 3, 4], [0.2, 0.1, 0.05])
-            if roll == 1:
+            roll = tileroll(['mountain',
+                             'mountain peak',
+                             'mountain pass',
+                             'volcano'], [0.2, 0.1, 0.05, 0.65])
+            if roll == ['mountain peak']:
                 mpeak += 1
-            elif roll == 2:
+            elif roll == ['mountain pass']:
                 mpass += 1
-            elif roll == 3:
+            elif roll == ['volcano']:
                 mvol += 1
         tiledict['mountain'] -= (mpeak + mpass + mvol)
-        tiledict['mpeak'] = mpeak
-        tiledict['mpass'] = mpass
-        tiledict['mvol'] = mvol
+        tiledict['mountain peak'] = mpeak
+        tiledict['mountain pass'] = mpass
+        tiledict['volcano'] = mvol
 
     return tiledict
 
@@ -223,11 +204,54 @@ def format_tiledict(tiledict):
     Dictionary of tiles from tile_terrain_creation() function.
     """
 
-    pass
+    print(f"TERRAIN TYPE: {tiledict['type']}")
+    newdict = {}
+    # Strip the type from the dictionary.
+    for k, v in tiledict.items():
+        if type(v) is not int:
+            continue
+        else:
+            newdict[k] = v
+    for k, v in sorted(newdict.items(), key=lambda item: item[1], reverse=True):
+        if v > 1:
+            print(f'{v} {k} tiles.')
+        if v == 1:
+            print(f'{v} {k} tile.')
+
+
+def generate_encounters(ttype, climate='temperate'):
+    majencprob = {'water': 0.1,
+                  'swamp': 0.2,
+                  'desert': 0.2,
+                  'plains': 0.6,
+                  'forest': 0.4,
+                  'hills': 0.4,
+                  'mountain': 0.2}
+    climatemod = {'arctic': -0.1,
+                  'subarctic': -0.05,
+                  'temperate': 0,
+                  'subtropical': 0.05,
+                  'tropical': 0.1}
+    roll = tileroll(['encounter', 'noencounter'], [majencprob[ttype]+climatemod[climate],
+                             1-majencprob[ttype]-climatemod[climate]])
+    # If the roll is true, there is a major encounter.
+    if roll == ['encounter']:
+        majenc = tileroll(['Settlement',
+                           'Fortress',
+                           'Religious Order',
+                           'Ruin',
+                           'Monster Lair',
+                           'Natural Phenomenon'])
+        print(f'MAJOR ENCOUNTER: There is a {majenc[0]} in this terrain.')
+    print('\n')
 
 
 if __name__ == '__main__':
-    # terrtype = input('What is the terrain type?: ')
-    # tile_terrain_creation(terrtype)
+    # ttype = input('What is the terrain type?: ')
+    # td = tile_terrain_creation(ttype)
+    # format_tiledict(td)
+    # generate_encounters(ttype)
     for ttype in terrtypes:
-        print(tile_terrain_creation(ttype))
+        td = tile_terrain_creation(ttype)
+        format_tiledict(td)
+        generate_encounters(ttype)
