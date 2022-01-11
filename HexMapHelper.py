@@ -232,10 +232,10 @@ def generate_encounters(ttype, climate='temperate'):
                   'temperate': 0,
                   'subtropical': 0.05,
                   'tropical': 0.1}
-    roll = tileroll(['encounter', 'noencounter'], [majencprob[ttype]+climatemod[climate],
+    # Roll Major Encounters
+    majencroll = tileroll(['majencounter', 'noencounter'], [majencprob[ttype]+climatemod[climate],
                              1-majencprob[ttype]-climatemod[climate]])
-    # If the roll is true, there is a major encounter.
-    if roll == ['encounter']:
+    if majencroll == ['majencounter']:
         majenc = tileroll(['Settlement',
                            'Fortress',
                            'Religious Order',
@@ -243,6 +243,51 @@ def generate_encounters(ttype, climate='temperate'):
                            'Monster Lair',
                            'Natural Phenomenon'])
         print(f'MAJOR ENCOUNTER: There is a {majenc[0]} in this terrain.')
+
+        # Major Encounter Specifics
+        if majenc == ['Religious Order']:
+            alignment = tileroll(['Lawful', 'Neutral', 'Chaotic'])
+            print(f'The religious order is of a {alignment[0]} alignment.')
+
+        if majenc == ['Ruin']:
+            abandoned = tileroll(['disease', 'being attacked', 'migration'], weights=[1/6, 2/6, 2/6])
+            print(f'The ruin was abandoned due to {abandoned[0]}.')
+
+        if majenc == ['Natural Phenomenon']:
+            feature = tileroll(['intense weather',
+                                'geothermal activity',
+                                'a peculiar growth or blight',
+                                'an oasis/grove'], weights=[1/6, 2/6, 2/6, 1/6])
+            print(f'The natural phenomenon in this terrain is {feature[0]}.')
+
+    # Roll Minor Encounters
+    for i in range(int(majencprob[ttype]*10)):
+        minorencroll = tileroll(['minencounter', 'noencounter'], weights=[1/6, 5/6])
+        if minorencroll == ['minencounter']:
+            minorenc = tileroll(['Village',
+                                 'Fort',
+                                 'Ruin',
+                                 'Monster Lair',
+                                 'Wandering Monster',
+                                 'Industrial Camp',
+                                 'Semi-Permenant Camp',
+                                 'Beacon',
+                                 'Construction Site',
+                                 'Battlefield',
+                                 "Outsider's Dwelling",
+                                 'Sacred Site',
+                                 'Crossing',
+                                 'Ancient Structure',
+                                 'Special Hazard',
+                                 'Treasure',
+                                 'Contested Area',
+                                 'Natural Resource',
+                                 'Supernatural Feature',
+                                 'Gathering Place'])
+            print(f'MINOR ENCOUNTER: There is a {minorenc[0]} in this terrain.')
+
+    # Minor Encounter Specifics
+
     print('\n')
 
 
