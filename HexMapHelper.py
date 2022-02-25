@@ -304,7 +304,7 @@ if __name__ == '__main__':
         td = tile_terrain_creation(ttype)
         format_tiledict(td)
         generate_encounters(ttype)
-        inp = input('Press any key to continue. Press R to reload with the same terrain type.')
+        inp = input('Press any key to continue. Enter R to reload with the same terrain type.')
         clear = lambda: os.system('cls')
         clear()
         if inp == 'r':
