@@ -1,4 +1,5 @@
 import random
+import os
 
 water = [9, 1, 1, 6, 3, 1, 0]
 swamp = [1, 9, 0, 6, 3, 0, 0]
@@ -10,6 +11,7 @@ mountain = [0, 0, 1, 0, 3, 6, 9]
 
 terrtypes = ['water', 'swamp', 'desert', 'plains', 'forest', 'hills', 'mountain']
 terrvalues = [water, swamp, desert, plains, forest, hills, mountain]
+climates = ['arctic', 'subarctic', 'temperate', 'subtropical', 'tropical']
 
 terraindict = {}
 for terrtype1 in terrtypes:
@@ -34,7 +36,8 @@ def tile_terrain_creation(terrtype):
     Creates a dictionary containing the number of tiles that a terrain hex should have from a given terrain type.
     """
     if terrtype not in terrtypes:
-        raise TypeError(f'Terrain type {terrtype} not accepted.')
+        raise TypeError(f'Terrain type {terrtype} not accepted. Terrain types are: water, swamp, desert, plains, '
+                        f'forest, hills, mountain.')
     # Reset Rolls.
     roll = None
     # Create initial dictionary for tile.
@@ -233,8 +236,8 @@ def generate_encounters(ttype, climate='temperate'):
                   'subtropical': 0.05,
                   'tropical': 0.1}
     # Roll Major Encounters
-    majencroll = tileroll(['majencounter', 'noencounter'], [majencprob[ttype]+climatemod[climate],
-                             1-majencprob[ttype]-climatemod[climate]])
+    majencroll = tileroll(['majencounter', 'noencounter'], [majencprob[ttype] + climatemod[climate],
+                                                            1 - majencprob[ttype] - climatemod[climate]])
     if majencroll == ['majencounter']:
         majenc = tileroll(['Settlement',
                            'Fortress',
@@ -250,19 +253,19 @@ def generate_encounters(ttype, climate='temperate'):
             print(f'The religious order is of a {alignment[0]} alignment.')
 
         if majenc == ['Ruin']:
-            abandoned = tileroll(['disease', 'being attacked', 'migration'], weights=[1/6, 2/6, 2/6])
+            abandoned = tileroll(['disease', 'being attacked', 'migration'], weights=[1 / 6, 2 / 6, 2 / 6])
             print(f'The ruin was abandoned due to {abandoned[0]}.')
 
         if majenc == ['Natural Phenomenon']:
             feature = tileroll(['intense weather',
                                 'geothermal activity',
                                 'a peculiar growth or blight',
-                                'an oasis/grove'], weights=[1/6, 2/6, 2/6, 1/6])
+                                'an oasis/grove'], weights=[1 / 6, 2 / 6, 2 / 6, 1 / 6])
             print(f'The natural phenomenon in this terrain is {feature[0]}.')
 
     # Roll Minor Encounters
-    for i in range(int(majencprob[ttype]*10)):
-        minorencroll = tileroll(['minencounter', 'noencounter'], weights=[1/6, 5/6])
+    for i in range(int(majencprob[ttype] * 10)):
+        minorencroll = tileroll(['minencounter', 'noencounter'], weights=[1 / 6, 5 / 6])
         if minorencroll == ['minencounter']:
             minorenc = tileroll(['Village',
                                  'Fort',
@@ -286,17 +289,28 @@ def generate_encounters(ttype, climate='temperate'):
                                  'Gathering Place'])
             print(f'MINOR ENCOUNTER: There is a {minorenc[0]} in this terrain.')
 
-    # Minor Encounter Specifics
+            # Minor Encounter Specifics
 
     print('\n')
 
 
 if __name__ == '__main__':
-    # ttype = input('What is the terrain type?: ')
-    # td = tile_terrain_creation(ttype)
-    # format_tiledict(td)
-    # generate_encounters(ttype)
-    for ttype in terrtypes:
+    while True:
+        ttype = input('What is the terrain type?: ').lower()
+        if ttype not in terrtypes:
+            print(f'Terrain type {ttype} not accepted. Terrain types are: water, swamp, desert, plains, '
+                        f'forest, hills, mountain.')
+            continue
         td = tile_terrain_creation(ttype)
         format_tiledict(td)
         generate_encounters(ttype)
+        inp = input('Press any key to continue. Press 'R' to reload with the same terrain type.')
+        clear = lambda: os.system('cls')
+        clear()
+        if inp == 'r':
+            td = tile_terrain_creation(ttype)
+            format_tiledict(td)
+            generate_encounters(ttype)
+        else:
+            continue
+
