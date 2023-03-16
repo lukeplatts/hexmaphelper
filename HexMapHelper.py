@@ -198,7 +198,7 @@ def tile_terrain_creation(terrtype):
     return tiledict
 
 
-def format_tiledict(tiledict):
+def format_tiledict(tiledict, returnres=False):
     """
     Recieves a dictonary of tile numbers, trims the empty values, and prints the number
     of each tile in an easily readable format.
@@ -220,6 +220,15 @@ def format_tiledict(tiledict):
             print(f'{v} {k} tiles.')
         if v == 1:
             print(f'{v} {k} tile.')
+
+    if returnres:
+        printlist = []
+        for k, v in sorted(newdict.items(), key=lambda item: item[1], reverse=True):
+            if v > 1:
+                printlist.append(f'{v} {k} tiles.')
+            if v == 1:
+                printlist.append(f'{v} {k} tile.')
+        return printlist
 
 
 def generate_encounters(ttype, climate='temperate'):
@@ -294,12 +303,23 @@ def generate_encounters(ttype, climate='temperate'):
     print('\n')
 
 
+def ProcessWrapper(ttype):
+
+    if ttype not in terrtypes:
+        print(f'Terrain type {ttype} not accepted. Terrain types are: water, swamp, desert, plains, '
+              f'forest, hills, mountain.')
+        raise TypeError
+    td = tile_terrain_creation(ttype)
+    printlist = (format_tiledict(td, returnres=True))
+    return printlist
+
+
 if __name__ == '__main__':
     while True:
         ttype = input('What is the terrain type?: ').lower()
         if ttype not in terrtypes:
             print(f'Terrain type {ttype} not accepted. Terrain types are: water, swamp, desert, plains, '
-                        f'forest, hills, mountain.')
+                  f'forest, hills, mountain.')
             continue
         td = tile_terrain_creation(ttype)
         format_tiledict(td)
@@ -316,4 +336,3 @@ if __name__ == '__main__':
             clear()
         else:
             continue
-
